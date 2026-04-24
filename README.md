@@ -28,9 +28,3 @@ contraseña: 1234
 - JavaScript
 - Chart.js
 - API REST (.NET)
-
-## 🎥 Demo
-(pon aquí tu video cuando lo grabes)
-
-## 🌐 Proyecto en vivo
-(pon aquí el link de GitHub Pages)
