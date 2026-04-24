@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36121.58 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NutriTrack.Api", "NutriTrack.Api\NutriTrack.Api.csproj", "{76FE2516-77C1-416C-AB03-78F2FB5D649C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NutriTrack.Domain", "NutriTrack.Domain\NutriTrack.Domain.csproj", "{D2026329-2B7D-4955-AB51-EDFAF0AB7BEB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NutriTrack.Infrastructure", "NutriTrack.Infrastructure\NutriTrack.Infrastructure.csproj", "{5B3D0359-B535-4F08-8ED1-F0769C170A3B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{76FE2516-77C1-416C-AB03-78F2FB5D649C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{76FE2516-77C1-416C-AB03-78F2FB5D649C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{76FE2516-77C1-416C-AB03-78F2FB5D649C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{76FE2516-77C1-416C-AB03-78F2FB5D649C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2026329-2B7D-4955-AB51-EDFAF0AB7BEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2026329-2B7D-4955-AB51-EDFAF0AB7BEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2026329-2B7D-4955-AB51-EDFAF0AB7BEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2026329-2B7D-4955-AB51-EDFAF0AB7BEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5B3D0359-B535-4F08-8ED1-F0769C170A3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B3D0359-B535-4F08-8ED1-F0769C170A3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B3D0359-B535-4F08-8ED1-F0769C170A3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B3D0359-B535-4F08-8ED1-F0769C170A3B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B8C97F5D-9EE6-4AFF-8905-28419C848C6C}
+	EndGlobalSection
+EndGlobal
