@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>NutriTrack Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    font-family: 'Segoe UI';
+    background: linear-gradient(135deg,#020617,#0f172a);
+    color: white;
+    margin:0;
+}
+
+/* LOGIN */
+#login {
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.login-box {
+    background:#1e293b;
+    padding:30px;
+    border-radius:15px;
+    width:300px;
+    text-align:center;
+}
+
+input, button {
+    width:100%;
+    padding:10px;
+    margin:5px 0;
+    border-radius:10px;
+    border:none;
+}
+
+button { cursor:pointer; }
+
+.save { background:#22c55e; }
+.delete { background:#ef4444; }
+
+.container {
+    display:grid;
+    grid-template-columns: 300px 1fr;
+    gap:20px;
+    padding:20px;
+}
+
+.card {
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+}
+
+li {
+    background:#334155;
+    padding:15px;
+    margin:10px;
+    border-radius:10px;
+    list-style:none;
+}
+
+.normal { color:#22c55e; }
+.sobrepeso { color:#facc15; }
+.obesidad { color:#ef4444; }
+.bajo { color:#38bdf8; }
+
+</style>
+</head>
+
+<body>
+
+<div id="login">
+<div class="login-box">
+<h2>Login</h2>
+
+<input id="user" placeholder="Usuario">
+<input id="pass" type="password" placeholder="Contraseña">
+
+<button onclick="login()">Entrar</button>
+
+<p style="font-size:12px;margin-top:10px;">
+nutri / 1234 (nutricionista)<br>
+paciente / 1234 (paciente)
+</p>
+</div>
+</div>
+
+<div id="app" style="display:none">
+
+<div class="container">
+
+<div>
+
+<div class="card">
+<h3>Paciente</h3>
+<input id="nombre" placeholder="Nombre">
+<input id="cedula" placeholder="Cédula">
+<input id="edad" placeholder="Edad">
+<input id="correo" placeholder="Correo">
+<input id="peso" placeholder="Peso">
+<input id="altura" placeholder="Altura">
+<button class="save" onclick="guardarPaciente()">Guardar</button>
+</div>
+
+<div class="card" id="consultaCard">
+<h3>Consulta</h3>
+<input id="cPacienteId" placeholder="ID Paciente">
+<input id="fecha" type="date">
+<input id="pesoC" placeholder="Peso">
+<input id="alturaC" placeholder="Altura">
+<input id="obs" placeholder="Observaciones">
+<button class="save" onclick="guardarConsulta()">Guardar</button>
+</div>
+
+<div class="card" id="planCard">
+<h3>Plan</h3>
+<input id="pPacienteId" placeholder="ID Paciente">
+<input id="objetivo" placeholder="Objetivo">
+<input id="caloriasPlan" placeholder="Calorías">
+<button class="save" onclick="guardarPlan()">Guardar</button>
+</div>
+
+</div>
+
+<div>
+
+<div class="card" id="graficaCard">
+<h3 id="nombrePaciente">Selecciona paciente</h3>
+<canvas id="chart"></canvas>
+</div>
+
+<h2>Pacientes</h2>
+<ul id="pacientes"></ul>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+const api="https://localhost:7188/api";
+
+let modo="";
+let chart;
+let pacienteSeleccionado=null;
+
+function login(){
+    const u = document.getElementById("user").value;
+    const p = document.getElementById("pass").value;
+
+    if(u==="nutri" && p==="1234"){
+        modo="nutri";
+    }else if(u==="paciente" && p==="1234"){
+        modo="paciente";
+    }else{
+        alert("❌ Credenciales incorrectas");
+        return;
+    }
+
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
+
+    if(modo==="paciente"){
+        document.getElementById("consultaCard").style.display="none";
+        document.getElementById("planCard").style.display="none";
+        document.getElementById("graficaCard").style.display="none";
+    }
+
+    cargar();
+}
+
+
+function imc(p,a){
+    if(!p || !a) return 0;
+    return (p/(a*a)).toFixed(2);
+}
+
+function estadoIMC(v){
+    if(v<18.5) return ["Bajo peso","bajo"];
+    if(v<25) return ["Normal","normal"];
+    if(v<30) return ["Sobrepeso","sobrepeso"];
+    return ["Obesidad","obesidad"];
+}
+
+
+async function cargar(){
+    try{
+        const pacientes = await fetch(api+"/Pacientes").then(r=>r.json());
+        const consultas = await fetch(api+"/Consultas").then(r=>r.json());
+        const planes = await fetch(api+"/Planes").then(r=>r.json());
+
+        document.getElementById("pacientes").innerHTML =
+        pacientes.map(p=>{
+
+            const cons = consultas.filter(c=>c.pacienteId==p.id);
+            const plan = planes.find(pl=>pl.pacienteId==p.id);
+
+            let imcVal;
+            let progreso="";
+
+            if(cons.length > 0){
+                const ordenadas = [...cons].sort((a,b)=> new Date(a.fecha) - new Date(b.fecha));
+
+                const primera = ordenadas[0];
+                const ultima = ordenadas[ordenadas.length-1];
+
+                const imcInicio = imc(primera.peso, primera.altura);
+                const imcFinal = imc(ultima.peso, ultima.altura);
+
+                imcVal = imcFinal;
+
+                if(imcFinal < imcInicio){
+                    progreso = "📉 Mejoró";
+                }else if(imcFinal > imcInicio){
+                    progreso = "📈 Empeoró";
+                }else{
+                    progreso = "➖ Sin cambios";
+                }
+
+            }else{
+                imcVal = imc(p.peso, p.altura);
+            }
+
+            const estado = estadoIMC(imcVal);
+
+            return `
+            <li onclick="verIMC(${p.id},'${p.nombre}')">
+
+            <b>${p.nombre}</b><br>
+            Peso: ${p.peso} | Altura: ${p.altura}<br>
+
+            IMC: <span class="${estado[1]}">
+            ${imcVal} (${estado[0]})
+            </span>
+
+            <br>${progreso}
+
+            <br><br>
+
+            📅 Consultas:<br>
+            ${
+                cons.length==0
+                ? "No tiene"
+                : cons.map(c=>{
+                    let imcC = imc(c.peso,c.altura);
+                    return `• ${c.fecha.split("T")[0]} | IMC ${imcC}`;
+                }).join("<br>")
+            }
+
+            <br><br>
+
+            🥗 Plan:<br>
+            ${
+                plan
+                ? `${plan.objetivo} (${plan.caloriasObjetivo} kcal)`
+                : "No tiene"
+            }
+
+            ${
+                modo==="nutri"
+                ? `
+                <br><br>
+                <button onclick="event.stopPropagation(); eliminar(${p.id})">Eliminar</button>
+                <button onclick="event.stopPropagation(); seleccionarPaciente(${p.id})">Usar ID</button>
+                `
+                : ""
+            }
+
+            </li>
+            `;
+        }).join("");
+
+    }catch(e){
+        console.error(e);
+        alert("❌ Error conectando con la API");
+    }
+}
+
+
+function verIMC(id,nombre){
+    pacienteSeleccionado=id;
+    document.getElementById("nombrePaciente").innerText="IMC de "+nombre;
+    cargarGrafica();
+}
+
+async function cargarGrafica(){
+    try{
+        const consultas = await fetch(api+"/Consultas").then(r=>r.json());
+
+        const data = consultas
+            .filter(c=>c.pacienteId==pacienteSeleccionado)
+            .sort((a,b)=> new Date(a.fecha)-new Date(b.fecha));
+
+        const fechas = data.map(c=>c.fecha.split("T")[0]);
+        const valores = data.map(c=>imc(c.peso,c.altura));
+
+        if(chart) chart.destroy();
+
+        chart = new Chart(document.getElementById("chart"),{
+            type:"line",
+            data:{
+                labels:fechas,
+                datasets:[{
+                    label:"IMC",
+                    data:valores
+                }]
+            }
+        });
+
+    }catch(e){
+        console.error(e);
+    }
+}
+
+
+async function guardarPaciente(){
+    try{
+        const res = await fetch(api+"/Pacientes",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                nombre: document.getElementById("nombre").value,
+                cedula: document.getElementById("cedula").value,
+                edad: +document.getElementById("edad").value,
+                correo: document.getElementById("correo").value,
+                peso: +document.getElementById("peso").value,
+                altura: +document.getElementById("altura").value
+            })
+        });
+
+        if(!res.ok){
+            alert("❌ Error al guardar");
+            return;
+        }
+
+        limpiar();
+        cargar();
+
+    }catch(e){
+        alert("❌ No conecta con la API");
+    }
+}
+
+function limpiar(){
+    document.getElementById("nombre").value="";
+    document.getElementById("cedula").value="";
+    document.getElementById("edad").value="";
+    document.getElementById("correo").value="";
+    document.getElementById("peso").value="";
+    document.getElementById("altura").value="";
+}
+
+function seleccionarPaciente(id){
+    document.getElementById("cPacienteId").value=id;
+    document.getElementById("pPacienteId").value=id;
+}
+
+async function guardarConsulta(){
+    await fetch(api+"/Consultas",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            pacienteId:+document.getElementById("cPacienteId").value,
+            fecha:document.getElementById("fecha").value,
+            peso:+document.getElementById("pesoC").value,
+            altura:+document.getElementById("alturaC").value,
+            observaciones:document.getElementById("obs").value
+        })
+    });
+
+    cargar();
+}
+
+async function guardarPlan(){
+    await fetch(api+"/Planes",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+            pacienteId:+document.getElementById("pPacienteId").value,
+            objetivo:document.getElementById("objetivo").value,
+            caloriasObjetivo:+document.getElementById("caloriasPlan").value
+        })
+    });
+
+    cargar();
+}
+
+async function eliminar(id){
+    if(!confirm("¿Eliminar paciente?")) return;
+
+    await fetch(api+"/Pacientes/"+id,{
+        method:"DELETE"
+    });
+
+    cargar();
+}
+
+</script>
+
+</body>
+</html>
